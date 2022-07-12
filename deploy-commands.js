@@ -22,11 +22,11 @@ rest.put(Routes.applicationCommands(clientId), { body: commands })
     .then(() => console.log('Successfully registered application commands.'))
     .catch(console.error);
 
-// rest.get(Routes.applicationGuildCommands(clientId, guildId))
+// rest.get(Routes.applicationCommands(clientId))
 //     .then(data => {
 //         const promises = [];
 //         for (const command of data) {
-//             const deleteUrl = `${Routes.applicationGuildCommands(clientId, guildId)}/${command.id}`;
+//             const deleteUrl = `${Routes.applicationCommands(clientId)}/${command.id}`;
 //             promises.push(rest.delete(deleteUrl));
 //         }
 //         return Promise.all(promises);

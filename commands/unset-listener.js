@@ -30,6 +30,8 @@ module.exports = {
             if (searchRules[id].length) {
                 interaction.reply('Success!');
                 return;
+            } else {
+                delete searchRules[id];
             }
         }
 

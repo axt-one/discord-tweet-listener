@@ -14,11 +14,6 @@ const redis = new Redis(process.env.REDIS_TLS_URL, {
 });
 
 client.redis = redis;
-
-client.redis.set('searchRules', JSON.stringify({}))
-    .then(() => console.log('connected to redis'))
-    .catch(console.log);
-
 client.twitterClient = twitter.readOnly.v2;
 client.twitterStream = client.twitterClient.searchStream({ autoConnect: false });
 
@@ -57,10 +52,17 @@ client.twitterStream.on(
     ETwitterStreamEvent.ConnectionClosed,
     () => console.log('Connection has been closed.'));
 
-client.twitterStream.connect({ autoReconnect: true, autoReconnectRetries: Infinity })
-    .then(() => console.log('connected'))
-    .catch(() => console.log('connection failed'));
 
+async function redisTwitterConnect() {
+    if (!await client.redis.exists('searchRules')) {
+        await client.redis.set('searchRules', JSON.stringify({})).catch(console.log);
+    }
+
+    await client.twitterStream.connect({ autoReconnect: true, autoReconnectRetries: Infinity })
+        .catch(() => console.log('connection failed'));
+}
+
+redisTwitterConnect();
 
 client.commands = new Collection();
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));

@@ -22,9 +22,12 @@ module.exports = {
             return;
         }
         const id = rules.data[index].id;
-        if (interaction.client.searchRules[id]) {
-            interaction.client.searchRules[id].delete(interaction.channelId);
-            if (interaction.client.searchRules[id].size) {
+        const searchRules = JSON.parse(
+            await interaction.client.redis.get('searchRules'));
+        if (searchRules[id]) {
+            searchRules[id] = searchRules[id].filter(ch => ch !== interaction.channelId);
+            await interaction.client.redis.set('searchRules', JSON.stringify(searchRules));
+            if (searchRules[id].length) {
                 interaction.reply('Success!');
                 return;
             }

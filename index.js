@@ -1,11 +1,23 @@
 const fs = require('node:fs');
 const { Client, Collection, Intents } = require('discord.js');
 const { ETwitterStreamEvent, TweetStream, TwitterApi, ETwitterApiError } = require('twitter-api-v2');
+const Redis = require("ioredis");
 require('dotenv').config();
 
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 const twitter = new TwitterApi(process.env.TWITTER_BEARER_TOKEN);
+const redis = new Redis(process.env.REDIS_TLS_URL, {
+    tls: {
+        rejectUnauthorized: false
+    }
+});
+
+client.redis = redis;
+
+client.redis.set('searchRules', JSON.stringify({}))
+    .then(() => console.log('connected to redis'))
+    .catch(console.log);
 
 client.twitterClient = twitter.readOnly.v2;
 client.twitterStream = client.twitterClient.searchStream({ autoConnect: false });
@@ -16,10 +28,11 @@ client.twitterStream.on(
         console.log(data);
         const ids = data.matching_rules.map(data => data.id);
         const url = 'https://twitter.com/twitter/status/' + data.data.id;
+        const searchRules = JSON.parse(await client.redis.get('searchRules'));
         for (const id of ids) {
-            console.log(client.searchRules[id]);
-            if (!client.searchRules[id]) continue;
-            for (const channelId of client.searchRules[id]) {
+            console.log(searchRules[id]);
+            if (!searchRules[id]) continue;
+            for (const channelId of searchRules[id]) {
                 await client.channels.cache.get(channelId).send(url);
             }
         }
@@ -47,7 +60,7 @@ client.twitterStream.on(
 client.twitterStream.connect({ autoReconnect: true, autoReconnectRetries: Infinity })
     .then(() => console.log('connected'))
     .catch(() => console.log('connection failed'));
-client.searchRules = {}
+
 
 client.commands = new Collection();
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));

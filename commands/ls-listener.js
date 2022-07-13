@@ -6,9 +6,11 @@ module.exports = {
         .setDescription('Show all listener in this channel.'),
     async execute(interaction) {
         const rules = await interaction.client.twitterClient.streamRules();
-        const channels = interaction.client.searchRules;
-        const ids = new Set(Object.keys(channels).filter(key =>
-            channels[key].has(interaction.channelId)
+        const searchRules = JSON.parse(
+            await interaction.client.redis.get('searchRules'));
+        // TODO: maybe it is easier to implement with inverted index.
+        const ids = new Set(Object.keys(searchRules).filter(key =>
+            searchRules[key].includes(interaction.channelId)
         ));
         if (!rules.data) {
             await interaction.reply('No listener is set.');

@@ -26,12 +26,14 @@ module.exports = {
             await interaction.client.redis.get('searchRules'));
         if (searchRules[id]) {
             searchRules[id] = searchRules[id].filter(ch => ch !== interaction.channelId);
+            if (!searchRules[id].length) {
+                delete searchRules[id];
+            }
             await interaction.client.redis.set('searchRules', JSON.stringify(searchRules));
-            if (searchRules[id].length) {
+
+            if (searchRules[id]) {
                 interaction.reply('Success!');
                 return;
-            } else {
-                delete searchRules[id];
             }
         }
 

@@ -1,6 +1,6 @@
 const fs = require('node:fs');
 const { Client, Collection, Intents } = require('discord.js');
-const { ETwitterStreamEvent, TweetStream, TwitterApi, ETwitterApiError } = require('twitter-api-v2');
+const { ETwitterStreamEvent, TwitterApi } = require('twitter-api-v2');
 const Redis = require("ioredis");
 require('dotenv').config();
 
@@ -15,20 +15,44 @@ const redis = new Redis(process.env.REDIS_TLS_URL, {
 
 client.redis = redis;
 client.twitterClient = twitter.readOnly.v2;
-client.twitterStream = client.twitterClient.searchStream({ autoConnect: false });
+client.twitterStream = client.twitterClient.searchStream({
+    autoConnect: false,
+    expansions: ['referenced_tweets.id', 'author_id']
+});
+
+function getOriginalTweetId(data) {
+    if (data.referenced_tweets && data.referenced_tweets[0].type === 'retweeted') {
+        return {
+            originalId: data.referenced_tweets[0].id,
+            retweeted: true
+        };
+    } else {
+        return {
+            originalId: data.id,
+            retweeted: false
+        };
+    }
+}
 
 client.twitterStream.on(
     ETwitterStreamEvent.Data,
     async data => {
         console.log(data);
         const ids = data.matching_rules.map(data => data.id);
-        const url = 'https://twitter.com/twitter/status/' + data.data.id;
+        const { originalId, retweeted } = getOriginalTweetId(data.data);
+        const url = 'https://twitter.com/twitter/status/' + originalId;
         const searchRules = JSON.parse(await client.redis.get('searchRules'));
         for (const id of ids) {
             console.log(searchRules[id]);
             if (!searchRules[id]) continue;
             for (const channelId of searchRules[id]) {
-                await client.channels.cache.get(channelId).send(url);
+                if (retweeted) {
+                    await client.channels.cache.get(channelId).send(
+                        `${data.includes.users[0].name}  Retweeted\n${url}`);
+                } else {
+                    await client.channels.cache.get(channelId).send(
+                        `${data.includes.users[0].name}  Tweeted\n${url}`);
+                }
             }
         }
     });

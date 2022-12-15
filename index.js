@@ -7,10 +7,10 @@ require('dotenv').config();
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 const twitter = new TwitterApi(process.env.TWITTER_BEARER_TOKEN);
-const redis = new Redis(process.env.REDIS_TLS_URL, {
-    tls: {
-        rejectUnauthorized: false
-    }
+const redis = new Redis({
+    host: process.env.REDIS_HOST, 
+    port: process.env.REDIS_PORT,
+    password: process.env.REDIS_PASSWORD 
 });
 
 client.redis = redis;

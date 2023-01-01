@@ -21,10 +21,15 @@ module.exports = {
     const dateString = interaction.options.getString("date");
     const message = interaction.options.getString("message");
     const date = new Date(dateString);
-    const job = schedule.scheduleJob(date, () => {
-      interaction.channel.send(message);
-    });
 
-    await interaction.reply("ok");
+    if (Number.isNaN(date.getTime())) {
+      await interaction.reply("Invalid Time");
+    } else {
+      const job = schedule.scheduleJob(date, () => {
+        interaction.channel.send(message);
+      });
+
+      await interaction.reply("ok");
+    }
   },
 };

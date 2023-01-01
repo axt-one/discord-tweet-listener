@@ -8,7 +8,7 @@ module.exports = {
     .addStringOption((option) =>
       option
         .setName("date")
-        .setDescription("YYYY:MM:DD:HH:mm")
+        .setDescription("YYYY-MM-DDTHH:mm")
         .setRequired(true)
     )
     .addStringOption((option) =>
@@ -20,7 +20,7 @@ module.exports = {
   async execute(interaction) {
     const dateString = interaction.options.getString("date");
     const message = interaction.options.getString("message");
-    const date = new Date(...dateString.split(":"));
+    const date = new Date(dateString);
     const job = schedule.scheduleJob(date, () => {
       interaction.channel.send(message);
     });

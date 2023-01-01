@@ -19,9 +19,10 @@ module.exports = {
     ),
   async execute(interaction) {
     const dateString = interaction.options.getString("date");
+    const message = interaction.options.getString("message");
     const date = new Date(...dateString.split(":"));
     const job = schedule.scheduleJob(date, () => {
-      interaction.channel.send("hello");
+      interaction.channel.send(message);
     });
 
     await interaction.reply("ok");

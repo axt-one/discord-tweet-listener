@@ -18,16 +18,20 @@ for (const file of commandFiles) {
 
 const rest = new REST({ version: '9' }).setToken(token);
 
-rest.put(Routes.applicationCommands(clientId), { body: commands })
-    .then(() => console.log('Successfully registered application commands.'))
-    .catch(console.error);
+async function main() {
+    await rest.get(Routes.applicationCommands(clientId))
+        .then(data => {
+            const promises = [];
+            for (const command of data) {
+                const deleteUrl = `${Routes.applicationCommands(clientId)}/${command.id}`;
+                promises.push(rest.delete(deleteUrl));
+            }
+            return Promise.all(promises);
+        }).then(() => console.log('Successfully deleted application commands.'));
 
-// rest.get(Routes.applicationCommands(clientId))
-//     .then(data => {
-//         const promises = [];
-//         for (const command of data) {
-//             const deleteUrl = `${Routes.applicationCommands(clientId)}/${command.id}`;
-//             promises.push(rest.delete(deleteUrl));
-//         }
-//         return Promise.all(promises);
-//     });
+    await rest.put(Routes.applicationCommands(clientId), { body: commands })
+        .then(() => console.log('Successfully registered application commands.'))
+        .catch(console.error);
+}
+
+main();
